@@ -6,21 +6,18 @@
 
 # Define the script version in terms of Semantic Versioning (SemVer)
 # when Git or other versioning systems are not employed.
-__version__ = "0.0.0"
-# v0.0.0    Release 15 Mar 2026.
-# v0.0.1    Revised run_mcp_checks() with retry loop to address GCP Cloud Run cold start delay.
+__version__ = "0.1.0"
+# v0.0.0    
+# v0.0.1    Revise execute_tool_with_retry()
+# v0.1.0    All new authentication and security routing architecture implemented for the server.
 
 """
-
 Model Context Protocol (MCP) Client Script for interaction with WeatherForensics MCP Server.
 
 Website:  WeatherForensics.dev
 
 GitHub:  https://github.com/markwkiehl/WeatherForensics-MCP
 
-
-This script is a template for a client that interacts with an MCP Server that has been deployed to Google Cloud Run service.
-Update BASE_URL in this script with the MCP Server URL for the Google Cloud Run service. 
 
 
 MCP Server Tools:
@@ -52,14 +49,16 @@ Description: Returns a report on any nx3structure impact to a specified location
 """
 
 from pathlib import Path
+
 import asyncio
+from fastmcp import Client
+import httpx
+
 import sys
 import os
 import json
 from typing import Dict, Any
 from datetime import datetime
-# pip install fastmcp
-from fastmcp import Client
 
 # ---------------------------------------------------------------------------
 # Configure logging
@@ -117,16 +116,17 @@ PATH_DATA = PATH_BASE / "data"
 # ----------------------------------------------------------------------
 # Configure the WeatherForensics.dev MCP server URL
 
-# The Forever Free Tier clients of the WeatherForensics.dev MCP server will use the following BASE_URL:
+# The Forever Free Tier clients of the WeatherForensics.dev MCP server will use the following BASE_URL & API_KEY:
 BASE_URL = "https://weatherforensics.dev/mcp/free"
 API_KEY = None
 
-# If you are a paid subscriber, expose the BASE_URL below and update the API_KEY with the one provided with your subscription:
+# If you are a paid subscriber, expose the BASE_URL & API_KEY below and update the API_KEY with the one provided with your subscription:
 #BASE_URL = "https://weatherforensics.dev/mcp/pro"
 #API_KEY = "your-39-character-api-key-#############"
 
 logger.info(f"BASE_URL: {BASE_URL}")
 logger.info(f"API_KEY: {API_KEY}")
+
 
 # ----------------------------------------------------------------------
 
@@ -163,36 +163,35 @@ def decode_nested_json(data):
         return data
 
 
-async def execute_tool_with_retry(tool_name: str, arguments: dict, max_retries: int = 3, verbose: bool=True):
+async def execute_tool_with_retry(client: Client, tool_name: str, arguments: dict, max_retries: int = 3, verbose: bool=True):
     """
-    Executes a single MCP tool with its own isolated connection and retry loop.
+    Executes a single Model Context Protocol (MCP) tool using the provided client connection with a retry loop.
     (Retry loop needed for Forever Free tier with server cold starts).
     """
     base_delay = 2.0
     for attempt in range(max_retries):
         try:
-            async with Client(BASE_URL) as client:
-                print(f"\nCalling MCP tool '{tool_name}'...")
-                result = await client.call_tool(tool_name, arguments)
-                
-                if result.is_error:
-                    print(f"Tool Execution Error: {result.content}")
-                elif result.content and len(result.content) > 0:
-                    json_str = result.content[0].text
-                    # Pass 'json_str' to an LLM.
-                    # Pretty print 'json_str' for human consumption (parse it back into a Python dictionary and re-dump it with the indent)
-                    try:
-                        initial_dict = json.loads(json_str)
-                        fully_decoded_dict = decode_nested_json(initial_dict)
-                        if verbose: print(json.dumps(fully_decoded_dict, indent=4))
-                        return json_str
-                    except json.JSONDecodeError:
-                        print(f"Server returned plain text instead of JSON:\n{json_str}")
-                else:
-                    raise Exception("Tool execution error")
-                
-                return None
-                
+            print(f"\nCalling MCP tool '{tool_name}'...")
+            result = await client.call_tool(tool_name, arguments)
+            
+            if result.is_error:
+                print(f"Tool Execution Error: {result.content}")
+            elif result.content and len(result.content) > 0:
+                json_str = result.content[0].text
+                # Pass 'json_str' to an LLM.
+                # Pretty print 'json_str' for human consumption (parse it back into a Python dictionary and re-dump it with the indent)
+                try:
+                    initial_dict = json.loads(json_str)
+                    fully_decoded_dict = decode_nested_json(initial_dict)
+                    if verbose: print(json.dumps(fully_decoded_dict, indent=4))
+                    return json_str
+                except json.JSONDecodeError:
+                    print(f"Server returned plain text instead of JSON:\n{json_str}")
+            else:
+                raise Exception("Tool execution error")
+            
+            return None
+            
         except Exception as e:
             logger.warning(f"Connection attempt {attempt + 1} failed for {tool_name}: {e}")
             if attempt < max_retries - 1:
@@ -205,8 +204,12 @@ async def execute_tool_with_retry(tool_name: str, arguments: dict, max_retries: 
 
 
 async def run_mcp_checks():
-    url = BASE_URL
-    
+    if API_KEY:
+        url = f"{BASE_URL}?key={API_KEY}"
+    else:
+        url = BASE_URL
+
+
     # Check MCP server status and get available tools.
     try:
         async with Client(url) as client:
@@ -226,30 +229,36 @@ async def run_mcp_checks():
                 print(f"Name: {tool.name}")
                 print(f"Description: {tool.description}")
                 print("-" * 20)
+
+            # Execute tools
+
+            json_str = await execute_tool_with_retry(client, "noaa_ncei_monthly_weather_for_location_date", {"latitude": 40.4407, "longitude": -76.12267, "local_datetime_iso": datetime(2025, 7, 10).isoformat()})
+            if json_str is None: 
+                raise Exception("ERROR")
+            else:
+                pass
+                # Pass json_str to LLM
+
+            json_str = await execute_tool_with_retry(client, "noaa_ncei_daily_weather_for_location_date", {"latitude": 40.4407, "longitude": -76.12267, "local_datetime_iso": datetime(2025, 7, 10).isoformat()})
+            
+            json_str = await execute_tool_with_retry(client, "noaa_ncei_hourly_weather_for_location_date", {"latitude": 40.4407, "longitude": -76.12267, "local_datetime_iso": datetime(2025, 7, 10, 13, 0).isoformat()})
+            
+            json_str = await execute_tool_with_retry(client, "noaa_nhc_tropical_cyclone_for_location_date", {"latitude": 26.674, "longitude": -82.248, "local_datetime_iso": datetime(2022, 9, 28).isoformat()})
+            
+            json_str = await execute_tool_with_retry(client, "noaa_swdi_nx3tvs_tornado_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
+
+            json_str = await execute_tool_with_retry(client, "noaa_swdi_supercell_storm_nx3mda_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
+
+            json_str = await execute_tool_with_retry(client, "noaa_swdi_nx3hail_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
+
+            json_str = await execute_tool_with_retry(client, "noaa_swdi_nx3structure_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
+
     except Exception as e:
-        logger.error(f"Failed to fetch server metadata: {e}")
+        logger.error(f"ERROR: {e}")
+        logger.error(f"Check your API key for the endpoint {url}.  See also WeatherForensics.dev")
         return
 
-    json_str = await execute_tool_with_retry("noaa_ncei_monthly_weather_for_location_date", {"latitude": 40.4407, "longitude": -76.12267, "local_datetime_iso": datetime(2025, 7, 10).isoformat()})
-    if json_str is None: 
-        raise Exception("ERROR")
-    else:
-        pass
-        # Pass json_str to LLM
 
-    json_str = await execute_tool_with_retry("noaa_ncei_daily_weather_for_location_date", {"latitude": 40.4407, "longitude": -76.12267, "local_datetime_iso": datetime(2025, 7, 10).isoformat()})
-    
-    json_str = await execute_tool_with_retry("noaa_ncei_hourly_weather_for_location_date", {"latitude": 40.4407, "longitude": -76.12267, "local_datetime_iso": datetime(2025, 7, 10, 13, 0).isoformat()})
-    
-    json_str = await execute_tool_with_retry("noaa_nhc_tropical_cyclone_for_location_date", {"latitude": 26.674, "longitude": -82.248, "local_datetime_iso": datetime(2022, 9, 28).isoformat()})
-    
-    json_str = await execute_tool_with_retry("noaa_swdi_nx3tvs_tornado_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
-
-    json_str = await execute_tool_with_retry("noaa_swdi_supercell_storm_nx3mda_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
-
-    json_str = await execute_tool_with_retry("noaa_swdi_nx3hail_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
-
-    json_str = await execute_tool_with_retry("noaa_swdi_nx3structure_impact_to_location", {"latitude": 40.7037, "longitude": -89.4148, "local_datetime_iso": datetime(2013, 11, 17).isoformat()})
 
 
 
