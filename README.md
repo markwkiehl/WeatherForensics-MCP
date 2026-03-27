@@ -8,6 +8,7 @@ This repository contains information, documentation, and a sample Python client 
 
 See also the WeatherForensics website at [WeatherForensics.dev](https://weatherforensics.dev/).
 
+
 ---
 
 ## 🚀 Features
@@ -70,7 +71,7 @@ WeatherForensics is deployed on Google Cloud Run and offers predictable pricing 
 
 | Tier | Price | Rate Limits & Quotas | Infrastructure |
 | :--- | :--- | :--- | :--- |
-| **Forever Free** | $0/mo | 10-15 Requests Per Minute (RPM), 500 Req/Day, 1 Concurrent | Shared Community Resource |
+| **Forever Free** | $0/mo | 10 Requests Per Minute (RPM), 500 Req/Day, 1 Concurrent | Shared Community Resource |
 | **Pro** | $29/mo | 60 RPM, 10,000 Req/Day, 5 Concurrent | Dedicated Endpoints, Zero Cold Starts |
 | **Enterprise** | $279/mo | 500+ RPM, Unlimited Concurrency | Dedicated Instance, Custom Bulk Payloads |
 
