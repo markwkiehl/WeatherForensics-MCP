@@ -3,13 +3,13 @@
 #   http://mechatronicsolutionsllc.com/
 #   http://www.savvysolutions.info/savvycodesolutions/
 
-
 # Define the script version in terms of Semantic Versioning (SemVer)
 # when Git or other versioning systems are not employed.
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 # v0.0.0    
 # v0.0.1    Revise execute_tool_with_retry()
 # v0.1.0    All new authentication and security routing architecture implemented for the server.
+# v0.1.1    Revised configuration of the WeatherForensics.dev MCP server URL & API Key.
 
 """
 Model Context Protocol (MCP) Client Script for interaction with WeatherForensics MCP Server.
@@ -51,8 +51,9 @@ Description: Returns a report on any nx3structure impact to a specified location
 from pathlib import Path
 
 import asyncio
+
+# Written for fastmcp v3.1.1 (2026 release)
 from fastmcp import Client
-import httpx
 
 import sys
 import os
@@ -114,15 +115,24 @@ PATH_SRC = PATH_BASE / "src"
 PATH_DATA = PATH_BASE / "data"
 
 # ----------------------------------------------------------------------
-# Configure the WeatherForensics.dev MCP server URL
+# Configure the WeatherForensics.dev MCP server URL & API Key
 
-# The Forever Free Tier clients of the WeatherForensics.dev MCP server will use the following BASE_URL & API_KEY:
-BASE_URL = "https://weatherforensics.dev/mcp/free"
-API_KEY = None
+# If you are a paid subscriber (Pro or Enterprise), you must set an environment variable "WeatherForensics_API_KEY" to the API Key you received with your purchased subscription. 
 
-# If you are a paid subscriber, expose the BASE_URL & API_KEY below and update the API_KEY with the one provided with your subscription:
-#BASE_URL = "https://weatherforensics.dev/mcp/pro"
-#API_KEY = "your-39-character-api-key-#############"
+
+# Fetch the API Key from the environment variables 
+# injected by the AI agent or registry configuration.
+# Fallback to None if the environment variable is not set or is empty.
+API_KEY = os.environ.get("WeatherForensics_API_KEY")
+if not API_KEY:
+    API_KEY = None
+
+# Dynamically route to the appropriate endpoint based on the key.
+if API_KEY:
+    BASE_URL = "https://weatherforensics.dev/mcp/pro"
+else:
+    BASE_URL = "https://weatherforensics.dev/mcp/free"
+
 
 logger.info(f"BASE_URL: {BASE_URL}")
 logger.info(f"API_KEY: {API_KEY}")

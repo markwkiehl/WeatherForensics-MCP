@@ -13,12 +13,12 @@ See also the WeatherForensics website at [WeatherForensics.dev](https://weatherf
 
 ## 🚀 Features
 
-* **Developer-Ready Formats:** Responses from all endpoints are delivered as clean JavaScript Object Notation (JSON) data structures, optimized for immediate human and Artificial Intelligence (AI) agent consumption.
-* **Transparent Data Provenance:** Every JSON payload explicitly identifies the data content category and its authoritative source dataset.
-* **Intelligent Dataset Routing:** The API automatically selects the most appropriate dataset—either the legacy National Oceanic and Atmospheric Administration (NOAA) National Centers for Environmental Information (NCEI) Integrated Surface Database (ISD) hourly dataset or the modern Global Historical Climatology Network hourly (GHCNh) dataset—based on your requested target year.
-* **Precision Spatial Querying:** For standard and severe weather requests, the engine automatically identifies the closest active station to your target coordinates that contains the most robust dataset.
-* **Advanced Cyclone Impact Analysis:** For tropical cyclone tracking, the API calculates the minimum distance between the storm centroid and your target, evaluating the maximum wind experienced utilizing standard 34, 50, and 64-knot wind radii models.
-* **Cross-Platform Compatibility:** Fully supported across Linux, macOS, and Windows environments.
+- **Developer-Ready Formats:** Responses from all endpoints are delivered as clean JavaScript Object Notation (JSON) data structures, optimized for immediate human and Artificial Intelligence (AI) agent consumption.
+- **Transparent Data Provenance:** Every JSON payload explicitly identifies the data content category and its authoritative source dataset.
+- **Intelligent Dataset Routing:** The API automatically selects the most appropriate dataset—either the legacy National Oceanic and Atmospheric Administration (NOAA) National Centers for Environmental Information (NCEI) Integrated Surface Database (ISD) hourly dataset or the modern Global Historical Climatology Network hourly (GHCNh) dataset—based on your requested target year.
+- **Precision Spatial Querying:** For standard and severe weather requests, the engine automatically identifies the closest active station to your target coordinates that contains the most robust dataset.
+- **Advanced Cyclone Impact Analysis:** For tropical cyclone tracking, the API calculates the minimum distance between the storm centroid and your target, evaluating the maximum wind experienced utilizing standard 34, 50, and 64-knot wind radii models.
+- **Cross-Platform Compatibility:** Fully supported across Linux, macOS, and Windows environments.
 
 ---
 
@@ -27,18 +27,18 @@ See also the WeatherForensics website at [WeatherForensics.dev](https://weatherf
 The MCP provides access to standard meteorological data and severe weather tracking via these MCP endpoints.
 
 **Standard Weather Endpoints:** (Sourced from NOAA NCEI)
-* `noaa_ncei_hourly_weather_for_location_date`
-* `noaa_ncei_daily_weather_for_location_date`
-* `noaa_ncei_monthly_weather_for_location_date`
+- `noaa_ncei_hourly_weather_for_location_date`
+- `noaa_ncei_daily_weather_for_location_date`
+- `noaa_ncei_monthly_weather_for_location_date`
 
 **Severe Weather Endpoints:** (Sourced from NOAA NCEI Severe Weather Data Inventory (SWDI))
-* `noaa_swdi_nx3tvs_tornado_impact_to_location`
-* `noaa_swdi_supercell_storm_nx3mda_impact_to_location`
-* `noaa_swdi_nx3hail_impact_to_location`
-* `noaa_swdi_nx3structure_impact_to_location`
+- `noaa_swdi_nx3tvs_tornado_impact_to_location`
+- `noaa_swdi_supercell_storm_nx3mda_impact_to_location`
+- `noaa_swdi_nx3hail_impact_to_location`
+- `noaa_swdi_nx3structure_impact_to_location`
 
 **Tropical Cyclone Endpoints:** (Derived from NOAA National Hurricane Center (NHC) HURDAT2)
-* `noaa_nhc_tropical_cyclone_for_location_date`
+- `noaa_nhc_tropical_cyclone_for_location_date`
 
 ---
 
@@ -51,17 +51,43 @@ pip install fastmcp python-json-logger
 ```
 
 ### Setup
-1. Clone this repository and open `mcp_client_noaa.py`.
-2. Configure the `BASE_URL` and `API_KEY` constants at the top of the script based on your service tier.
-    * **Forever Free Tier:** Leave `API_KEY = None`. Use the default `BASE_URL`: `"https://weatherforensics.dev/mcp/free"`.
-    * **Pro Tier:** Enable the `BASE_URL` of "https://weatherforensics.dev/mcp/pro" and set `API_KEY` to your 39-character key.
-    * **Enterprise Tier:** Update `BASE_URL` to your custom gateway URL and set `API_KEY` to your 39-character key.
+Clone this repository and navigate to the directory containing `mcp_client_noaa.py`.  
+Configure your service tier by setting the WeatherForensics_API_KEY environment variable. The script automatically determines the correct Uniform Resource Locator (URL) based on this key.  
+- **Forever Free Tier**: Do not set the environment variable. The script will use the default free endpoint.
+- **Pro Tier**: Set the environment variable to your 39-character Application Programming Interface (API) key.
+- **Enterprise Tier**: Set the environment variable to your 39-character API key (and update the gateway URL (BASE_URL) directly in the script).
 
 ### Usage
+If you are a Pro or Enterprise tier subscriber, set an environment variable "WeatherForensics_API_KEY" to your API Key.  Not required for the Forever Free tier.
+- Linux/macOS: export WeatherForensics_API_KEY="your-key-here"
+- Windows (Command Prompt): set WeatherForensics_API_KEY="your-key-here"
+- Windows (PowerShell): $env:WeatherForensics_API_KEY="your-key-here"
+
 Execute the client script from your terminal:
 ```bash
 python mcp_client_noaa.py
 ```
+
+---
+## 🤖 AI Agent Integration (Claude Desktop)
+
+To use WeatherForensics MCP directly within Claude Desktop, add the following to your `claude_desktop_config.json`:
+
+{
+  "mcpServers": {
+    "weatherforensics": {
+      "command": "python",
+      "args": [
+        "/absolute/path/to/WeatherForensics-MCP/mcp_client_noaa.py"
+      ],
+      "env": {
+        "WeatherForensics_API_KEY": "" 
+      }
+    }
+  }
+}
+
+Leave `WeatherForensics_API_KEY` blank to use the Forever Free subscription tier.
 
 ---
 
@@ -615,11 +641,11 @@ All endpoints require target coordinates (latitude,longitude) and local datetime
 
 When integrating the API, you may encounter the following standard HTTP status codes:
 
-* **`200 OK`**: The request was successful and the JavaScript Object Notation (JSON) payload is returned.
-* **`400 Bad Request`**: The request payload is malformed, missing required fields (`latitude`, `longitude`, `local_datetime_iso`), or contains invalid coordinates/dates.
-* **`401 Unauthorized`**: An invalid or missing API Key was provided for a Pro/Enterprise tier endpoint.
-* **`429 Too Many Requests`**: You have exceeded the rate limits for your specific subscription tier. Back off and retry later.
-* **`500 Internal Server Error`**: An unexpected error occurred on the server (e.g., upstream National Oceanic and Atmospheric Administration (NOAA) API timeouts).
+- **`200 OK`**: The request was successful and the JavaScript Object Notation (JSON) payload is returned.
+- **`400 Bad Request`**: The request payload is malformed, missing required fields (`latitude`, `longitude`, `local_datetime_iso`), or contains invalid coordinates/dates.
+- **`401 Unauthorized`**: An invalid or missing API Key was provided for a Pro/Enterprise tier endpoint.
+- **`429 Too Many Requests`**: You have exceeded the rate limits for your specific subscription tier. Back off and retry later.
+- **`500 Internal Server Error`**: An unexpected error occurred on the server (e.g., upstream National Oceanic and Atmospheric Administration (NOAA) API timeouts).
 
 ---
 
@@ -631,8 +657,8 @@ When integrating the WeatherForensics Application Programming Interface (API) or
 
 ### 1. Usage Rights & Restrictions
 
-* **Allowed:** You may use the data for internal analysis, commercial applications, and providing ground-truth context to Artificial Intelligence (AI) models.
-* **Restricted:** You may not systematically scrape, bulk-download, resell, or redistribute the raw API/MCP responses as a competing standalone weather data service.
+- **Allowed:** You may use the data for internal analysis, commercial applications, and providing ground-truth context to Artificial Intelligence (AI) models.
+- **Restricted:** You may not systematically scrape, bulk-download, resell, or redistribute the raw API/MCP responses as a competing standalone weather data service.
 
 ### 2. Required End-User Attribution
 

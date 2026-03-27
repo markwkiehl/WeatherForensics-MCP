@@ -1,0 +1,20 @@
+# Configuration for Smithery registry deployment
+startCommand:
+  type: stdio
+configSchema:
+  type: object
+  properties:
+    weatherForensicsApiKey:
+      type: string
+      description: Optional WeatherForensics Application Programming Interface (API) Key for Pro or Enterprise tiers. Leave blank for the Forever Free tier.
+commandFunction:
+  |-
+  (config) => {
+    return {
+      command: 'python',
+      args: ['mcp_client_noaa.py'],
+      env: {
+        WeatherForensics_API_KEY: config.weatherForensicsApiKey || ""
+      }
+    };
+  }

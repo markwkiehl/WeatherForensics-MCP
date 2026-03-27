@@ -1,0 +1,13 @@
+# Written for MCP Python SDK v1.26+ (2026 release)
+[project]
+name = "weatherforensics-mcp"
+version = "1.0.0"
+description = "MCP server providing historical standard and severe weather data relative to a specific location and timestamp."
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["mcp", "weather", "historical", "forensics", "NOAA", "NCEI", "SWDI", "NHC"]
+dependencies = [
+    "mcp",
+    "fastmcp",
+    "python-json-logger"
+]
