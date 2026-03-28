@@ -69,16 +69,19 @@ python mcp_client_noaa.py
 ```
 
 ---
+
 ## 🤖 AI Agent Integration (Claude Desktop)
 
-To use WeatherForensics MCP directly within Claude Desktop, add the following to your `claude_desktop_config.json`:
+To use the WeatherForensics Model Context Protocol (MCP) directly within Claude Desktop, you must bridge its local standard input/output (stdio) requirement to our remote Streamable HyperText Transfer Protocol (HTTP) server. You do this by pointing Claude Desktop to the included proxy script.
+
+Add the following to your `claude_desktop_config.json` file:
 
 {
   "mcpServers": {
     "weatherforensics": {
       "command": "python",
       "args": [
-        "/absolute/path/to/WeatherForensics-MCP/mcp_client_noaa.py"
+        "/absolute/path/to/WeatherForensics-MCP/mcp_stdio_proxy.py"
       ],
       "env": {
         "WeatherForensics_API_KEY": "" 
@@ -87,7 +90,8 @@ To use WeatherForensics MCP directly within Claude Desktop, add the following to
   }
 }
 
-Leave `WeatherForensics_API_KEY` blank to use the Forever Free subscription tier.
+- Leave `WeatherForensics_API_KEY` blank to use the Forever Free subscription tier.
+- Ensure you replace `/absolute/path/to/` with the actual directory path to the cloned repository on your local machine.
 
 ---
 
