@@ -12,7 +12,7 @@ commandFunction:
   (config) => {
     return {
       command: 'python',
-      args: ['mcp_client_noaa.py'],
+      args: ['mcp_stdio_proxy.py'],
       env: {
         WeatherForensics_API_KEY: config.weatherForensicsApiKey || ""
       }
