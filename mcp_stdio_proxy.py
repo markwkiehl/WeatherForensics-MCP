@@ -8,19 +8,15 @@ It allows a client's Artificial Intelligence (AI) agent to connect locally via s
 securely bridges the connection to your remote Streamable HTTP endpoint.
 """
 
-import os
-from fastmcp import FastMCP
+# Written for FastMCP v2.14 and v3.x (2025-2026 releases)
+from fastmcp import FastMCP, Client
 
-# Fetch the API Key from the environment
-API_KEY = os.environ.get("WeatherForensics_API_KEY")
+# Configure a client to connect to your remote Cloud Run server
+backend_client = Client("https://noaa-mcp-free-bly45pyigq-uk.a.run.app/mcp")
 
-if API_KEY:
-    url = f"https://weatherforensics.dev/mcp/pro?key={API_KEY}"
-else:
-    url = "https://weatherforensics.dev/mcp/free"
-
-# Create a local proxy that bridges to your remote Streamable HTTP server
-mcp = FastMCP.as_proxy(url)
+# Create the proxy server instance from the client
+proxy_server = FastMCP.from_client(backend_client, name="WeatherForensics Proxy")
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    # Run the proxy server via stdio
+    proxy_server.run(transport="stdio")
