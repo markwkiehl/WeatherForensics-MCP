@@ -1,20 +1,13 @@
-# Configuration for Smithery registry deployment
+# smithery.yaml
+
 startCommand:
   type: stdio
+  command: python
+  args:
+    - mcp_stdio_proxy.py
+
+# Adding an empty config schema prevents Smithery from throwing a deployment warning.
+# You can expand this later if you require users to input an API key for a Pro tier.
 configSchema:
   type: object
-  properties:
-    weatherForensicsApiKey:
-      type: string
-      description: Optional WeatherForensics Application Programming Interface (API) Key for Pro or Enterprise tiers. Leave blank for the Forever Free tier.
-commandFunction:
-  |-
-  (config) => {
-    return {
-      command: 'python',
-      args: ['mcp_stdio_proxy.py'],
-      env: {
-        WeatherForensics_API_KEY: config.weatherForensicsApiKey || ""
-      }
-    };
-  }
+  properties: {}
